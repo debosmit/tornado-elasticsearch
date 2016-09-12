@@ -246,11 +246,8 @@ class AsyncElasticsearch(Elasticsearch):
     @query_params()
     def ping(self, params=None):
         """ Returns True if the cluster is up, False otherwise. """
-        try:
-            self.transport.perform_request('HEAD', '/', params=params)
-        except TransportError:
-            raise gen.Return(False)
-        raise gen.Return(True)
+        result = yield self.transport.perform_request('HEAD', '/', params=params)
+        raise gen.Return(result)
 
     @gen.coroutine
     @query_params()
@@ -328,6 +325,8 @@ class AsyncElasticsearch(Elasticsearch):
                                                        params=params, body=body)
         raise gen.Return(data)
 
+    # TODO This method needs to be moved so it can be called as indices.exists
+    # The current project structure should aim to parallel the sync elasticsearch client.
     @gen.coroutine
     @query_params('allow_no_indices', 'expand_wildcards', 'ignore_unavailable',
         'local')
@@ -349,11 +348,8 @@ class AsyncElasticsearch(Elasticsearch):
         """
         if index in SKIP_IN_PATH:
             raise ValueError("Empty value passed for a required argument 'index'.")
-        try :
-            self.transport.perform_request('HEAD', _make_path(index), params=params)
-        except NotFoundError:
-            raise gen.Return(False)
-        raise gen.Return(True)
+        result = yield self.transport.perform_request('HEAD', _make_path(index), params=params)
+        raise gen.Return(result)
 
     @gen.coroutine
     @query_params('parent', 'preference', 'realtime', 'refresh', 'routing')
@@ -375,13 +371,10 @@ class AsyncElasticsearch(Elasticsearch):
             performing the operation
         :arg routing: Specific routing value
         """
-        try:
-            self.transport.perform_request('HEAD',
+        result = yield self.transport.perform_request('HEAD',
                                            _make_path(index, doc_type, id),
                                            params=params)
-        except NotFoundError:
-            raise gen.Return(False)
-        raise gen.Return(True)
+        raise gen.Return(result)
 
     @gen.coroutine
     @query_params('_source', '_source_exclude', '_source_include', 'fields',
@@ -437,12 +430,9 @@ class AsyncElasticsearch(Elasticsearch):
         :arg local: Return local information, do not retrieve the state from
             master node (default: false)
         """
-        try:
-            self.transport.perform_request('HEAD', _make_path(index, '_alias',
+        result = yield self.transport.perform_request('HEAD', _make_path(index, '_alias',
                 name), params=params)
-        except NotFoundError:
-            raise gen.Return(False)
-        raise gen.Return(True)
+        raise gen.Return(result)
 
     @gen.coroutine
     @query_params('allow_no_indices', 'expand_wildcards', 'ignore_unavailable',
@@ -485,8 +475,7 @@ class AsyncElasticsearch(Elasticsearch):
         for param in (index, name):
             if param in SKIP_IN_PATH:
                 raise ValueError("Empty value passed for a required argument.")
-        _, result = yield self.transport.perform_request('PUT', _make_path(index,
-            '_alias', name), params=params, body=body)
+        _, result = yield self.transport.perform_request('PUT', _make_path(index, '_alias', name), params=params, body=body)
         raise gen.Return(result)
 
     @gen.coroutine
