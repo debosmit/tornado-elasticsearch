@@ -201,6 +201,9 @@ class AsyncTransport(Transport):
                                                               ignore=ignore)
                 (status, headers, data) = result
             except TransportError as e:
+                if method == 'HEAD' and e.status_code == 404:
+                    raise gen.Return(False)
+
                 retry = False
                 if isinstance(e, ConnectionTimeout):
                     retry = self.retry_on_timeout
@@ -219,6 +222,8 @@ class AsyncTransport(Transport):
                     raise
 
             else:
+                if method == 'HEAD':
+                    raise gen.Return(200 <= status < 300)
                 # connection didn't fail, confirm it's live status
                 self.connection_pool.mark_live(connection)
                 raise gen.Return((status, self.deserializer.loads(data, headers.get('content-type') if data else None)))
@@ -345,8 +350,7 @@ class AsyncElasticsearch(Elasticsearch):
         if index in SKIP_IN_PATH:
             raise ValueError("Empty value passed for a required argument 'index'.")
         try :
-            self.transport.perform_request('HEAD', _make_path(index),
-                params=params)
+            self.transport.perform_request('HEAD', _make_path(index), params=params)
         except NotFoundError:
             raise gen.Return(False)
         raise gen.Return(True)
