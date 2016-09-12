@@ -324,6 +324,34 @@ class AsyncElasticsearch(Elasticsearch):
         raise gen.Return(data)
 
     @gen.coroutine
+    @query_params('allow_no_indices', 'expand_wildcards', 'ignore_unavailable',
+        'local')
+    def exists_index(self, index, params=None):
+        """
+        Return a boolean indicating whether given index exists.
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/indices-exists.html>`_
+        :arg index: A comma-separated list of indices to check
+        :arg allow_no_indices: Whether to ignore if a wildcard indices
+            expression resolves into no concrete indices. (This includes `_all`
+            string or when no indices have been specified)
+        :arg expand_wildcards: Whether to expand wildcard expression to concrete
+            indices that are open, closed or both., default 'open', valid
+            choices are: 'open', 'closed', 'none', 'all'
+        :arg ignore_unavailable: Whether specified concrete indices should be
+            ignored when unavailable (missing or closed)
+        :arg local: Return local information, do not retrieve the state from
+            master node (default: false)
+        """
+        if index in SKIP_IN_PATH:
+            raise ValueError("Empty value passed for a required argument 'index'.")
+        try :
+            self.transport.perform_request('HEAD', _make_path(index),
+                params=params)
+        except NotFoundError:
+            raise gen.Return(False)
+        raise gen.Return(True)
+
+    @gen.coroutine
     @query_params('parent', 'preference', 'realtime', 'refresh', 'routing')
     def exists(self, index, id, doc_type='_all', params=None):
         """
@@ -405,9 +433,12 @@ class AsyncElasticsearch(Elasticsearch):
         :arg local: Return local information, do not retrieve the state from
             master node (default: false)
         """
-        _, result = yield self.transport.perform_request('HEAD', _make_path(index, '_alias',
+        try:
+            self.transport.perform_request('HEAD', _make_path(index, '_alias',
                 name), params=params)
-        raise gen.Return(result)
+        except NotFoundError:
+            raise gen.Return(False)
+        raise gen.Return(True)
 
     @gen.coroutine
     @query_params('allow_no_indices', 'expand_wildcards', 'ignore_unavailable',
