@@ -26,7 +26,7 @@ from elasticsearch.exceptions import ConnectionError, \
     ConnectionTimeout
 from elasticsearch.client import Elasticsearch
 from elasticsearch.transport import Transport, TransportError
-from elasticsearch.client.utils import query_params, _make_path
+from elasticsearch.client.utils import query_params, _make_path, SKIP_IN_PATH
 
 from tornado import concurrent
 from tornado import gen
@@ -407,6 +407,27 @@ class AsyncElasticsearch(Elasticsearch):
         """
         _, result = yield self.transport.perform_request(
             'GET', _make_path(index, '_alias', name), params=params)
+        raise gen.Return(result)
+
+    @gen.coroutine
+    @query_params('master_timeout', 'timeout')
+    def put_alias(self, index, name, body=None, params=None):
+        """
+        Create an alias for a specific index/indices.
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html>`_
+        :arg index: A comma-separated list of index names the alias should point
+            to (supports wildcards); use `_all` to perform the operation on all
+            indices.
+        :arg name: The name of the alias to be created or updated
+        :arg body: The settings for the alias, such as `routing` or `filter`
+        :arg master_timeout: Specify timeout for connection to master
+        :arg timeout: Explicit timeout for the operation
+        """
+        for param in (index, name):
+            if param in SKIP_IN_PATH:
+                raise ValueError("Empty value passed for a required argument.")
+        _, result = yield self.transport.perform_request('PUT', _make_path(index,
+            '_alias', name), params=params, body=body)
         raise gen.Return(result)
 
     @gen.coroutine
