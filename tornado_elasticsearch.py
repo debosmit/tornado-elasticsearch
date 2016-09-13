@@ -201,6 +201,9 @@ class AsyncTransport(Transport):
                                                               ignore=ignore)
                 (status, headers, data) = result
             except TransportError as e:
+                if method == 'HEAD' and e.status_code == 404:
+                    raise gen.Return(False)
+
                 retry = False
                 if isinstance(e, ConnectionTimeout):
                     retry = self.retry_on_timeout
@@ -219,6 +222,8 @@ class AsyncTransport(Transport):
                     raise
 
             else:
+                if method == 'HEAD':
+                    raise gen.Return(200 <= status < 300)
                 # connection didn't fail, confirm it's live status
                 self.connection_pool.mark_live(connection)
                 raise gen.Return((status, self.deserializer.loads(data, headers.get('content-type') if data else None)))
@@ -241,11 +246,8 @@ class AsyncElasticsearch(Elasticsearch):
     @query_params()
     def ping(self, params=None):
         """ Returns True if the cluster is up, False otherwise. """
-        try:
-            self.transport.perform_request('HEAD', '/', params=params)
-        except TransportError:
-            raise gen.Return(False)
-        raise gen.Return(True)
+        result = yield self.transport.perform_request('HEAD', '/', params=params)
+        raise gen.Return(result)
 
     @gen.coroutine
     @query_params()
@@ -323,6 +325,32 @@ class AsyncElasticsearch(Elasticsearch):
                                                        params=params, body=body)
         raise gen.Return(data)
 
+    # TODO This method needs to be moved so it can be called as indices.exists
+    # The current project structure should aim to parallel the sync elasticsearch client.
+    @gen.coroutine
+    @query_params('allow_no_indices', 'expand_wildcards', 'ignore_unavailable',
+        'local')
+    def exists_index(self, index, params=None):
+        """
+        Return a boolean indicating whether given index exists.
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/indices-exists.html>`_
+        :arg index: A comma-separated list of indices to check
+        :arg allow_no_indices: Whether to ignore if a wildcard indices
+            expression resolves into no concrete indices. (This includes `_all`
+            string or when no indices have been specified)
+        :arg expand_wildcards: Whether to expand wildcard expression to concrete
+            indices that are open, closed or both., default 'open', valid
+            choices are: 'open', 'closed', 'none', 'all'
+        :arg ignore_unavailable: Whether specified concrete indices should be
+            ignored when unavailable (missing or closed)
+        :arg local: Return local information, do not retrieve the state from
+            master node (default: false)
+        """
+        if index in SKIP_IN_PATH:
+            raise ValueError("Empty value passed for a required argument 'index'.")
+        result = yield self.transport.perform_request('HEAD', _make_path(index), params=params)
+        raise gen.Return(result)
+
     @gen.coroutine
     @query_params('parent', 'preference', 'realtime', 'refresh', 'routing')
     def exists(self, index, id, doc_type='_all', params=None):
@@ -343,13 +371,10 @@ class AsyncElasticsearch(Elasticsearch):
             performing the operation
         :arg routing: Specific routing value
         """
-        try:
-            self.transport.perform_request('HEAD',
+        result = yield self.transport.perform_request('HEAD',
                                            _make_path(index, doc_type, id),
                                            params=params)
-        except NotFoundError:
-            raise gen.Return(False)
-        raise gen.Return(True)
+        raise gen.Return(result)
 
     @gen.coroutine
     @query_params('_source', '_source_exclude', '_source_include', 'fields',
@@ -405,7 +430,7 @@ class AsyncElasticsearch(Elasticsearch):
         :arg local: Return local information, do not retrieve the state from
             master node (default: false)
         """
-        _, result = yield self.transport.perform_request('HEAD', _make_path(index, '_alias',
+        result = yield self.transport.perform_request('HEAD', _make_path(index, '_alias',
                 name), params=params)
         raise gen.Return(result)
 
@@ -450,8 +475,7 @@ class AsyncElasticsearch(Elasticsearch):
         for param in (index, name):
             if param in SKIP_IN_PATH:
                 raise ValueError("Empty value passed for a required argument.")
-        _, result = yield self.transport.perform_request('PUT', _make_path(index,
-            '_alias', name), params=params, body=body)
+        _, result = yield self.transport.perform_request('PUT', _make_path(index, '_alias', name), params=params, body=body)
         raise gen.Return(result)
 
     @gen.coroutine
