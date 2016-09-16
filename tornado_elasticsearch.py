@@ -904,6 +904,37 @@ class AsyncElasticsearch(Elasticsearch):
                                                        params=params, body=body)
         raise gen.Return(data)
 
+    @query_params('completion_fields', 'fielddata_fields', 'fields', 'groups',
+                  'human', 'level', 'types')
+    def stats(self, index=None, metric=None, params=None):
+            """
+            Retrieve statistics on different operations happening on an index.
+            `<http://www.elastic.co/guide/en/elasticsearch/reference/current/indices-stats.html>`_
+            :arg index: A comma-separated list of index names; use `_all` or empty
+                string to perform the operation on all indices
+            :arg metric: Limit the information returned the specific metrics.
+            :arg completion_fields: A comma-separated list of fields for `fielddata`
+                and `suggest` index metric (supports wildcards)
+            :arg fielddata_fields: A comma-separated list of fields for `fielddata`
+                index metric (supports wildcards)
+            :arg fields: A comma-separated list of fields for `fielddata` and
+                `completion` index metric (supports wildcards)
+            :arg groups: A comma-separated list of search groups for `search` index
+                metric
+            :arg human: Whether to return time and byte values in human-readable
+                format., default False
+            :arg level: Return stats aggregated at cluster, index or shard level,
+                default 'indices', valid choices are: 'cluster', 'indices', 'shards'
+            :arg types: A comma-separated list of document types for the `indexing`
+                index metric
+            """
+            _, data = yield self.transport.perform_request('GET',
+                                                           _make_path(index,
+                                                                      '_stats',
+                                                                      metric),
+                                                           params=params)
+            raise gen.Return(data)
+
     @gen.coroutine
     @query_params('ignore_indices', 'preference', 'routing', 'source')
     def suggest(self, index=None, body=None, params=None):
