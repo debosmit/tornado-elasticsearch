@@ -4,10 +4,17 @@ python:
   # does not have headers provided, please ask https://launchpad.net/~pypy/+archive/ppa
   # maintainers to fix their pypy-dev package.
   - "pypy"
+services:
+  - elasticsearch
+# ElasticSearch takes few seconds to start, to make sure it is available when 
+# the build script runs add a small delay to your build script:
+before_script:
+  - sleep 10
 # command to install dependencies
 install:
   - pip install .
+  - pip install -r requirements-bootstrap.txt
   - pip install -r requirements.txt
   - python setup.py install
 # command to run tests
-script: nosetests
+script: fab test:environment=testing
