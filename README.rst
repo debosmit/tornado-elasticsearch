@@ -72,6 +72,7 @@ Example Request Handlers
 
 Version History
 ---------------
+- current build -- bug fix and modification
 - 0.3.0: Bugfix: Add body to log_request_fail call (#1)
 - 0.2.0: Bugfix: force method to POST if GET and body passed
 - 0.1.0: Initial version
