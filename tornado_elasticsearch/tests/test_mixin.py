@@ -27,10 +27,8 @@ class TestMixin(unittest.TestCase, ElasticsearchTestCaseMixin):
         index_mappings = {'index_name': mapping}
         self.setup_elasticsearch(index_mappings=index_mappings)
 
-        index_info = self.es.indices.get_aliases()
-
-        expected_index_info = {'index_name': {'aliases': {}}}
-        self.assertDictEqual(index_info, expected_index_info)
+        index_exists = self.es.indices.exists(index='index_name')
+        self.assertTrue(index_exists)
 
         index_mapping = self.es.indices.get_mapping(index='index_name')
         expected_mapping = {
