@@ -14,7 +14,7 @@ from pathlib import Path
 env.directory = re.sub(r'(tornado-elasticsearch).*$', r'\1', os.getcwd())
 env.activate = '. %s/env/bin/activate' % env.directory
 
-DEFAULT_ENVIRONMENT = 'local'
+DEFAULT_ENVIRONMENT = 'testing'
 TEST_FIXTURES_PATH = Path(__file__).resolve().parent / 'tornado_elasticsearch' / 'tests' / 'fixtures'
 
 
