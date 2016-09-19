@@ -1,0 +1,40 @@
+[
+   {
+      "index": "index",
+      "doc_type": "uid",
+      "id": "1",
+      "body": {
+         "uid": "1"
+      }
+   },
+   {
+      "index": "index",
+      "doc_type": "uid",
+      "id": "2",
+      "body": {
+         "uid": "2"
+      }
+   },
+   {
+      "index": "index",
+      "doc_type": "uid",
+      "id": "3",
+      "body": {
+         "uid": "3"
+      }
+   },
+   {
+      "index": "index",
+      "doc_type": "uid",
+      "id": "4",
+      "body": {
+         "uid": "4"
+      }
+   },
+   {
+      "_alias": {
+         "index": "index", 
+         "name": "index_alias"
+      }
+   }
+]

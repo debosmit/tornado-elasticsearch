@@ -1,3 +1,4 @@
 git+https://github.com/uber/clay.git@4386380f40a1ff6837ea337eb9f77328b70bdcd2
 elasticsearch>=2.0.0,<3.0.0
+PyYAML>=3.10
 tornado>=4.3,<4.4
