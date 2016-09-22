@@ -229,6 +229,63 @@ class AsyncTransport(Transport):
                 raise gen.Return((status, self.deserializer.loads(data, headers.get('content-type') if data else None)))
 
 
+@gen.coroutine
+def scan(client, query=None, scroll='5m', raise_on_error=True,
+         preserve_order=False, size=1000, request_timeout=None, **kwargs):
+    """
+    Simple abstraction on top of the
+    :meth:`~elasticsearch.Elasticsearch.scroll` api - a simple iterator that
+    yields all hits as returned by underlining scroll requests.
+    By default scan does not return results in any pre-determined order. To
+    have a standard order in the returned documents (either by score or
+    explicit sort definition) when scrolling, use ``preserve_order=True``. This
+    may be an expensive operation and will negate the performance benefits of
+    using ``scan``.
+    :arg client: instance of :class:`~elasticsearch.Elasticsearch` to use
+    :arg query: body for the :meth:`~elasticsearch.Elasticsearch.search` api
+    :arg scroll: Specify how long a consistent view of the index should be
+        maintained for scrolled search
+    :arg raise_on_error: raises an exception (``ScanError``) if an error is
+        encountered (some shards fail to execute). By default we raise.
+    :arg preserve_order: don't set the ``search_type`` to ``scan`` - this will
+        cause the scroll to paginate with preserving the order. Note that this
+        can be an extremely expensive operation and can easily lead to
+        unpredictable results, use with caution.
+    :arg size: size (per shard) of the batch send at each iteration.
+    :arg request_timeout: explicit timeout for each call to ``scan``
+    Any additional keyword arguments will be passed to the initial
+    :meth:`~elasticsearch.Elasticsearch.search` call::
+        scan(es,
+            query={"query": {"match": {"title": "python"}}},
+            index="orders-*",
+            doc_type="books"
+        )
+    """
+    if not preserve_order:
+        body = query.copy() if query else {}
+        body["sort"] = "_doc"
+    # initial search
+    resp = yield client.search(body=query, scroll=scroll, size=size,
+                               request_timeout=request_timeout, **kwargs)
+    result = []
+    try:
+        raise gen.Return(result)
+    finally:
+        try:
+            while True:
+                result.append(resp['hits']['hits'])
+                scroll_id = resp.get('_scroll_id', None)
+                if scroll_id is None:
+                    break
+                else:
+                    resp = yield client.scroll(scroll_id)
+        finally:
+            if scroll_id:
+                yield client.clear_scroll(
+                    body={'scroll_id': [scroll_id]},
+                    ignore=(404, ))
+
+
 class AsyncElasticsearch(Elasticsearch):
     """Extends the official elasticsearch.Elasticsearch object to make the
     client invoked methods coroutines.
