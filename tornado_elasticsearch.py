@@ -273,7 +273,7 @@ def scan(client, query=None, scroll='5m', raise_on_error=True,
     finally:
         try:
             while True:
-                result.append(resp['hits']['hits'])
+                result.extend(resp['hits']['hits'])
                 scroll_id = resp.get('_scroll_id', None)
                 if scroll_id is None:
                     break
