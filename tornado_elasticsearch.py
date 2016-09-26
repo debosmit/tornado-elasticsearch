@@ -275,12 +275,15 @@ def scan(client, query=None, scroll='5m', raise_on_error=True,
         while True:
             result.extend(resp['hits']['hits'])
             scroll_id = resp.get('_scroll_id', None)
-            if scroll_id is None or not resp['hits']['hits']:
+            if scroll_id is None:
                 break
             else:
                 resp = yield client.scroll(scroll_id,
                                            scroll=scroll,
                                            request_timeout=request_timeout)
+
+            if not resp['hits']['hits']:
+                break
     finally:
         if scroll_id:
             yield client.clear_scroll(scroll_id, ignore=(404, ))
