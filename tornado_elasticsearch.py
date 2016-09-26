@@ -197,8 +197,8 @@ class AsyncTransport(Transport):
             connection = self.get_connection()
             try:
                 result = yield connection.perform_request(method, url,
-                                                              params, body,
-                                                              ignore=ignore)
+                                                          params, body,
+                                                          ignore=ignore)
                 (status, headers, data) = result
             except TransportError as e:
                 if method == 'HEAD' and e.status_code == 404:
@@ -281,9 +281,7 @@ def scan(client, query=None, scroll='5m', raise_on_error=True,
                     resp = yield client.scroll(scroll_id)
         finally:
             if scroll_id:
-                yield client.clear_scroll(
-                    body={'scroll_id': [scroll_id]},
-                    ignore=(404, ))
+                yield client.clear_scroll(scroll_id, ignore=(404, ))
 
 
 class AsyncElasticsearch(Elasticsearch):
@@ -291,6 +289,7 @@ class AsyncElasticsearch(Elasticsearch):
     client invoked methods coroutines.
 
     """
+
     def __init__(self, hosts=None, **kwargs):
         """Create a new AsyncElasticsearch instance
 
@@ -346,7 +345,7 @@ class AsyncElasticsearch(Elasticsearch):
         :arg version_type: Specific version type
         """
         result = yield self.index(index, doc_type, body, id=id, params=params,
-                            op_type='create')
+                                  op_type='create')
         raise gen.Return(result)
 
     @gen.coroutine
@@ -386,7 +385,7 @@ class AsyncElasticsearch(Elasticsearch):
     # The current project structure should aim to parallel the sync elasticsearch client.
     @gen.coroutine
     @query_params('allow_no_indices', 'expand_wildcards', 'ignore_unavailable',
-        'local')
+                  'local')
     def exists_index(self, index, params=None):
         """
         Return a boolean indicating whether given index exists.
@@ -429,8 +428,8 @@ class AsyncElasticsearch(Elasticsearch):
         :arg routing: Specific routing value
         """
         result = yield self.transport.perform_request('HEAD',
-                                           _make_path(index, doc_type, id),
-                                           params=params)
+                                                      _make_path(index, doc_type, id),
+                                                      params=params)
         raise gen.Return(result)
 
     @gen.coroutine
@@ -469,7 +468,7 @@ class AsyncElasticsearch(Elasticsearch):
 
     @gen.coroutine
     @query_params('allow_no_indices', 'expand_wildcards', 'ignore_unavailable',
-        'local')
+                  'local')
     def exists_alias(self, index=None, name=None, params=None):
         """
         Return a boolean indicating whether given alias exists.
@@ -488,7 +487,7 @@ class AsyncElasticsearch(Elasticsearch):
             master node (default: false)
         """
         result = yield self.transport.perform_request('HEAD', _make_path(index, '_alias',
-                name), params=params)
+                                                                         name), params=params)
         raise gen.Return(result)
 
     @gen.coroutine
@@ -784,7 +783,7 @@ class AsyncElasticsearch(Elasticsearch):
                                                        _make_path('_search',
                                                                   'scroll',
                                                                   scroll_id),
-                                                                  params=params)
+                                                       params=params)
         raise gen.Return(data)
 
     @gen.coroutine
@@ -803,7 +802,6 @@ class AsyncElasticsearch(Elasticsearch):
                                                                   scroll_id),
                                                        params=params)
         raise gen.Return(data)
-
 
     @gen.coroutine
     @query_params('consistency', 'parent', 'refresh', 'replication', 'routing',
@@ -964,33 +962,33 @@ class AsyncElasticsearch(Elasticsearch):
     @query_params('completion_fields', 'fielddata_fields', 'fields', 'groups',
                   'human', 'level', 'types')
     def stats(self, index=None, metric=None, params=None):
-            """
-            Retrieve statistics on different operations happening on an index.
-            `<http://www.elastic.co/guide/en/elasticsearch/reference/current/indices-stats.html>`_
-            :arg index: A comma-separated list of index names; use `_all` or empty
-                string to perform the operation on all indices
-            :arg metric: Limit the information returned the specific metrics.
-            :arg completion_fields: A comma-separated list of fields for `fielddata`
-                and `suggest` index metric (supports wildcards)
-            :arg fielddata_fields: A comma-separated list of fields for `fielddata`
-                index metric (supports wildcards)
-            :arg fields: A comma-separated list of fields for `fielddata` and
-                `completion` index metric (supports wildcards)
-            :arg groups: A comma-separated list of search groups for `search` index
-                metric
-            :arg human: Whether to return time and byte values in human-readable
-                format., default False
-            :arg level: Return stats aggregated at cluster, index or shard level,
-                default 'indices', valid choices are: 'cluster', 'indices', 'shards'
-            :arg types: A comma-separated list of document types for the `indexing`
-                index metric
-            """
-            _, data = yield self.transport.perform_request('GET',
-                                                           _make_path(index,
-                                                                      '_stats',
-                                                                      metric),
-                                                           params=params)
-            raise gen.Return(data)
+        """
+        Retrieve statistics on different operations happening on an index.
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/indices-stats.html>`_
+        :arg index: A comma-separated list of index names; use `_all` or empty
+            string to perform the operation on all indices
+        :arg metric: Limit the information returned the specific metrics.
+        :arg completion_fields: A comma-separated list of fields for `fielddata`
+            and `suggest` index metric (supports wildcards)
+        :arg fielddata_fields: A comma-separated list of fields for `fielddata`
+            index metric (supports wildcards)
+        :arg fields: A comma-separated list of fields for `fielddata` and
+            `completion` index metric (supports wildcards)
+        :arg groups: A comma-separated list of search groups for `search` index
+            metric
+        :arg human: Whether to return time and byte values in human-readable
+            format., default False
+        :arg level: Return stats aggregated at cluster, index or shard level,
+            default 'indices', valid choices are: 'cluster', 'indices', 'shards'
+        :arg types: A comma-separated list of document types for the `indexing`
+            index metric
+        """
+        _, data = yield self.transport.perform_request('GET',
+                                                       _make_path(index,
+                                                                  '_stats',
+                                                                  metric),
+                                                       params=params)
+        raise gen.Return(data)
 
     @gen.coroutine
     @query_params('ignore_indices', 'preference', 'routing', 'source')
@@ -1043,10 +1041,10 @@ class AsyncElasticsearch(Elasticsearch):
 
     @gen.coroutine
     @query_params('boost_terms', 'max_doc_freq', 'max_query_terms',
-        'max_word_len', 'min_doc_freq', 'min_term_freq', 'min_word_len',
-        'mlt_fields', 'percent_terms_to_match', 'routing', 'search_from',
-        'search_indices', 'search_query_hint', 'search_scroll', 'search_size',
-        'search_source', 'search_type', 'search_types', 'stop_words')
+                  'max_word_len', 'min_doc_freq', 'min_term_freq', 'min_word_len',
+                  'mlt_fields', 'percent_terms_to_match', 'routing', 'search_from',
+                  'search_indices', 'search_query_hint', 'search_scroll', 'search_size',
+                  'search_source', 'search_type', 'search_types', 'stop_words')
     def mlt(self, index, doc_type, id, body=None, params=None):
         """
         Get documents that are "like" a specified document.
