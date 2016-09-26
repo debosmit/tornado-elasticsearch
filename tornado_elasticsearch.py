@@ -777,20 +777,24 @@ class AsyncElasticsearch(Elasticsearch):
 
     @gen.coroutine
     @query_params('scroll')
-    def scroll(self, scroll_id, params=None):
+    def scroll(self, scroll_id=None, body=None, params=None):
         """
         Scroll a search request created by specifying the scroll parameter.
-        `<http://www.elasticsearch.org/guide/reference/api/search/scroll/>`_
-
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-scroll.html>`_
         :arg scroll_id: The scroll ID
+        :arg body: The scroll ID if not passed by URL or query parameter.
         :arg scroll: Specify how long a consistent view of the index should be
             maintained for scrolled search
         """
-        _, data = yield self.transport.perform_request('GET',
-                                                       _make_path('_search',
-                                                                  'scroll',
-                                                                  scroll_id),
-                                                       params=params)
+        if scroll_id in SKIP_IN_PATH and body in SKIP_IN_PATH:
+            raise ValueError("You need to supply scroll_id or body.")
+        elif scroll_id and not body:
+            body = scroll_id
+        elif scroll_id:
+            params['scroll_id'] = scroll_id
+
+        _, data = yield self.transport.perform_request('GET', '/_search/scroll',
+                                                       params=params, body=body)
         raise gen.Return(data)
 
     @gen.coroutine
