@@ -264,24 +264,31 @@ def scan(client, query=None, scroll='5m', raise_on_error=True,
     if not preserve_order:
         body = query.copy() if query else {}
         body["sort"] = "_doc"
+
     # initial search
     resp = yield client.search(body=query, scroll=scroll, size=size,
                                request_timeout=request_timeout, **kwargs)
     result = []
+    scroll_id = None
+
     try:
-        raise gen.Return(result)
+        while True:
+            result.extend(resp['hits']['hits'])
+            scroll_id = resp.get('_scroll_id', None)
+            if scroll_id is None:
+                break
+            else:
+                resp = yield client.scroll(scroll_id,
+                                           scroll=scroll,
+                                           request_timeout=request_timeout)
+
+            if not resp['hits']['hits']:
+                break
     finally:
-        try:
-            while True:
-                result.extend(resp['hits']['hits'])
-                scroll_id = resp.get('_scroll_id', None)
-                if scroll_id is None:
-                    break
-                else:
-                    resp = yield client.scroll(scroll_id)
-        finally:
-            if scroll_id:
-                yield client.clear_scroll(scroll_id, ignore=(404, ))
+        if scroll_id:
+            yield client.clear_scroll(scroll_id, ignore=(404, ))
+
+    raise gen.Return(result)
 
 
 class AsyncElasticsearch(Elasticsearch):
