@@ -1103,3 +1103,35 @@ class AsyncElasticsearch(Elasticsearch):
                                                                   '_mlt'),
                                                        params=params, body=body)
         raise gen.Return(data)
+
+    @query_params('level', 'local', 'master_timeout', 'timeout',
+        'wait_for_active_shards', 'wait_for_events', 'wait_for_nodes',
+        'wait_for_relocating_shards', 'wait_for_status')
+    def health(self, index=None, params=None):
+        """
+        Get a very simple status on the health of the cluster.
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/cluster-health.html>`_
+        :arg index: Limit the information returned to a specific index
+        :arg level: Specify the level of detail for returned information,
+            default 'cluster', valid choices are: 'cluster', 'indices', 'shards'
+        :arg local: Return local information, do not retrieve the state from
+            master node (default: false)
+        :arg master_timeout: Explicit operation timeout for connection to master
+            node
+        :arg timeout: Explicit operation timeout
+        :arg wait_for_active_shards: Wait until the specified number of shards
+            is active
+        :arg wait_for_events: Wait until all currently queued events with the
+            given priorty are processed, valid choices are: 'immediate',
+            'urgent', 'high', 'normal', 'low', 'languid'
+        :arg wait_for_nodes: Wait until the specified number of nodes is
+            available
+        :arg wait_for_relocating_shards: Wait until the specified number of
+            relocating shards is finished
+        :arg wait_for_status: Wait until cluster is in a specific state, default
+            None, valid choices are: 'green', 'yellow', 'red'
+        """
+        _, data = yield self.transport.perform_request('GET', _make_path('_cluster',
+            'health', index), params=params)
+
+        raise gen.Return(data)
