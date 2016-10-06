@@ -1104,9 +1104,10 @@ class AsyncElasticsearch(Elasticsearch):
                                                        params=params, body=body)
         raise gen.Return(data)
 
+    @gen.coroutine
     @query_params('level', 'local', 'master_timeout', 'timeout',
-        'wait_for_active_shards', 'wait_for_events', 'wait_for_nodes',
-        'wait_for_relocating_shards', 'wait_for_status')
+                  'wait_for_active_shards', 'wait_for_events', 'wait_for_nodes',
+                  'wait_for_relocating_shards', 'wait_for_status')
     def health(self, index=None, params=None):
         """
         Get a very simple status on the health of the cluster.
@@ -1131,7 +1132,7 @@ class AsyncElasticsearch(Elasticsearch):
         :arg wait_for_status: Wait until cluster is in a specific state, default
             None, valid choices are: 'green', 'yellow', 'red'
         """
-        _, data = yield self.transport.perform_request('GET', _make_path('_cluster',
-            'health', index), params=params)
+        _, data = yield self.transport.perform_request(
+            'GET', _make_path('_cluster', 'health', index), params=params)
 
         raise gen.Return(data)
