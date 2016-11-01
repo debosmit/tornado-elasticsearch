@@ -970,6 +970,7 @@ class AsyncElasticsearch(Elasticsearch):
                                                        params=params, body=body)
         raise gen.Return(data)
 
+    @gen.coroutine
     @query_params('completion_fields', 'fielddata_fields', 'fields', 'groups',
                   'human', 'level', 'types')
     def stats(self, index=None, metric=None, params=None):
@@ -999,6 +1000,30 @@ class AsyncElasticsearch(Elasticsearch):
                                                                   '_stats',
                                                                   metric),
                                                        params=params)
+        raise gen.Return(data)
+
+    @gen.coroutine
+    @query_params('flat_settings', 'human', 'timeout')
+    def cluster_stats(self, node_id=None, params=None):
+        """
+        The Cluster Stats API allows to retrieve statistics from a cluster wide
+        perspective. The API returns basic index metrics and information about
+        the current nodes that form the cluster.
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/cluster-stats.html>`_
+        :arg node_id: A comma-separated list of node IDs or names to limit the
+            returned information; use `_local` to return information from the
+            node you're connecting to, leave empty to get information from all
+            nodes
+        :arg flat_settings: Return settings in flat format (default: false)
+        :arg human: Whether to return time and byte values in human-readable
+            format., default False
+        :arg timeout: Explicit operation timeout
+        """
+        url = '/_cluster/stats'
+        if node_id:
+            url = _make_path('_cluster/stats/nodes', node_id)
+
+        _, data = yield self.transport.perform_request('GET', url, params=params)
         raise gen.Return(data)
 
     @gen.coroutine
@@ -1102,4 +1127,37 @@ class AsyncElasticsearch(Elasticsearch):
                                                                   doc_type, id,
                                                                   '_mlt'),
                                                        params=params, body=body)
+        raise gen.Return(data)
+
+    @gen.coroutine
+    @query_params('level', 'local', 'master_timeout', 'timeout',
+                  'wait_for_active_shards', 'wait_for_events', 'wait_for_nodes',
+                  'wait_for_relocating_shards', 'wait_for_status')
+    def health(self, index=None, params=None):
+        """
+        Get a very simple status on the health of the cluster.
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/cluster-health.html>`_
+        :arg index: Limit the information returned to a specific index
+        :arg level: Specify the level of detail for returned information,
+            default 'cluster', valid choices are: 'cluster', 'indices', 'shards'
+        :arg local: Return local information, do not retrieve the state from
+            master node (default: false)
+        :arg master_timeout: Explicit operation timeout for connection to master
+            node
+        :arg timeout: Explicit operation timeout
+        :arg wait_for_active_shards: Wait until the specified number of shards
+            is active
+        :arg wait_for_events: Wait until all currently queued events with the
+            given priorty are processed, valid choices are: 'immediate',
+            'urgent', 'high', 'normal', 'low', 'languid'
+        :arg wait_for_nodes: Wait until the specified number of nodes is
+            available
+        :arg wait_for_relocating_shards: Wait until the specified number of
+            relocating shards is finished
+        :arg wait_for_status: Wait until cluster is in a specific state, default
+            None, valid choices are: 'green', 'yellow', 'red'
+        """
+        _, data = yield self.transport.perform_request(
+            'GET', _make_path('_cluster', 'health', index), params=params)
+
         raise gen.Return(data)
