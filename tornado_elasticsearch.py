@@ -523,6 +523,21 @@ class AsyncElasticsearch(Elasticsearch):
 
     @gen.coroutine
     @query_params('master_timeout', 'timeout')
+    def update_aliases(self, body, params=None):
+        """
+        Update specified aliases.
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html>`_
+        :arg body: The definition of `actions` to perform
+        :arg master_timeout: Specify timeout for connection to master
+        :arg timeout: Request timeout
+        """
+        if body in SKIP_IN_PATH:
+            raise ValueError("Empty value passed for a required argument 'body'.")
+        _, result = yield self.transport.perform_request('POST', '/_aliases', params=params, body=body)
+        raise gen.Return(result)
+
+    @gen.coroutine
+    @query_params('master_timeout', 'timeout')
     def put_alias(self, index, name, body=None, params=None):
         """
         Create an alias for a specific index/indices.
