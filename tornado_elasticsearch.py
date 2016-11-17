@@ -474,6 +474,27 @@ class AsyncElasticsearch(Elasticsearch):
         raise gen.Return(data)
 
     @gen.coroutine
+    @query_params('master_timeout', 'timeout')
+    def delete_alias(self, index, name, params=None):
+        """
+        Delete specific alias.
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/indices-aliases.html>`_
+        :arg index: A comma-separated list of index names (supports wildcards);
+            use `_all` for all indices
+        :arg name: A comma-separated list of aliases to delete (supports
+            wildcards); use `_all` to delete all aliases for the specified
+            indices.
+        :arg master_timeout: Specify timeout for connection to master
+        :arg timeout: Explicit timeout for the operation
+        """
+        for param in (index, name):
+            if param in SKIP_IN_PATH:
+                raise ValueError("Empty value passed for a required argument.")
+        result = yield self.transport.perform_request('DELETE', _make_path(index,
+            '_alias', name), params=params)
+        raise gen.Return(result)
+
+    @gen.coroutine
     @query_params('allow_no_indices', 'expand_wildcards', 'ignore_unavailable',
                   'local')
     def exists_alias(self, index=None, name=None, params=None):
