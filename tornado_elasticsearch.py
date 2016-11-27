@@ -74,7 +74,7 @@ class AsyncHttpConnection(Connection):
         self._headers = {'Content-Type': 'application/json; charset=UTF-8'}
         self._start_time = None
         self.request_timeout = request_timeout
-        self._ca_cert = kwargs.get('ca_certs')
+        self._ca_certs = kwargs.get('ca_certs')
 
     @concurrent.return_future
     def perform_request(self, method, url, params=None, body=None,
