@@ -74,6 +74,7 @@ class AsyncHttpConnection(Connection):
         self._headers = {'Content-Type': 'application/json; charset=UTF-8'}
         self._start_time = None
         self.request_timeout = request_timeout
+        self._ca_certs = kwargs.get('ca_certs')
 
     @concurrent.return_future
     def perform_request(self, method, url, params=None, body=None,
@@ -98,8 +99,11 @@ class AsyncHttpConnection(Connection):
 
         LOGGER.debug('Fetching [%s] %s', kwargs['method'], request_uri)
         LOGGER.debug('kwargs: %r', kwargs)
-        self._client.fetch(httpclient.HTTPRequest(request_uri, **kwargs),
-                           callback=on_response)
+        args = {'url': request_uri}
+        args.update(kwargs)
+        if self._ca_certs:
+            args['ca_certs'] = self._ca_certs
+        self._client.fetch(httpclient.HTTPRequest(**args), callback=on_response)
 
     def _assign_auth_values(self, http_auth):
         """Take the http_auth value and split it into the attributes that
