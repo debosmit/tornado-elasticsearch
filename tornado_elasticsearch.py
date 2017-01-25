@@ -670,21 +670,21 @@ class AsyncElasticsearch(Elasticsearch):
 
     @gen.coroutine
     @query_params('_source', '_source_exclude', '_source_include',
-                  'analyze_wildcard', 'analyzer', 'default_operator', 'df',
-                  'explain', 'fields', 'ignore_indices', 'indices_boost',
-                  'lenient', 'lowercase_expanded_terms', 'from_', 'preference',
-                  'q', 'routing', 'scroll', 'search_type', 'size', 'sort',
-                  'source', 'stats', 'suggest_field', 'suggest_mode',
-                  'suggest_size', 'suggest_text', 'timeout', 'version')
+        'allow_no_indices', 'analyze_wildcard', 'analyzer', 'default_operator',
+        'df', 'docvalue_fields', 'expand_wildcards', 'explain',
+        'fielddata_fields', 'from_', 'ignore_unavailable', 'lenient',
+        'lowercase_expanded_terms', 'preference', 'q', 'request_cache',
+        'routing', 'scroll', 'search_type', 'size', 'sort', 'stats',
+        'stored_fields', 'suggest_field', 'suggest_mode', 'suggest_size',
+        'suggest_text', 'terminate_after', 'timeout', 'track_scores', 'version')
     def search(self, index=None, doc_type=None, body=None, params=None):
         """
         Execute a search query and get back search hits that match the query.
-        `<http://www.elasticsearch.org/guide/reference/api/search/>`_
-
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html>`_
         :arg index: A comma-separated list of index names to search; use `_all`
             or empty string to perform the operation on all indices
-        :arg doc_type: A comma-separated list of document types to search;
-            leave empty to perform the operation on all types
+        :arg doc_type: A comma-separated list of document types to search; leave
+            empty to perform the operation on all types
         :arg body: The search definition using the Query DSL
         :arg _source: True or false to return the _source field or not, or a
             list of fields to return
@@ -692,43 +692,60 @@ class AsyncElasticsearch(Elasticsearch):
             _source field
         :arg _source_include: A list of fields to extract and return from the
             _source field
+        :arg allow_no_indices: Whether to ignore if a wildcard indices
+            expression resolves into no concrete indices. (This includes `_all`
+            string or when no indices have been specified)
         :arg analyze_wildcard: Specify whether wildcard and prefix queries
             should be analyzed (default: false)
         :arg analyzer: The analyzer to use for the query string
         :arg default_operator: The default operator for query string query (AND
-            or OR) (default: OR)
+            or OR), default 'OR', valid choices are: 'AND', 'OR'
         :arg df: The field to use as default where no field prefix is given in
             the query string
-        :arg explain: Specify whether to return detailed information about
-            score computation as part of a hit
-        :arg fields: A comma-separated list of fields to return as part of a hit
-        :arg ignore_indices: When performed on multiple indices, allows to
-            ignore `missing` ones (default: none)
-        :arg indices_boost: Comma-separated list of index boosts
+        :arg docvalue_fields: A comma-separated list of fields to return as the
+            docvalue representation of a field for each hit
+        :arg expand_wildcards: Whether to expand wildcard expression to concrete
+            indices that are open, closed or both., default 'open', valid
+            choices are: 'open', 'closed', 'none', 'all'
+        :arg explain: Specify whether to return detailed information about score
+            computation as part of a hit
+        :arg fielddata_fields: A comma-separated list of fields to return as the
+            docvalue representation of a field for each hit
+        :arg from\_: Starting offset (default: 0)
+        :arg ignore_unavailable: Whether specified concrete indices should be
+            ignored when unavailable (missing or closed)
         :arg lenient: Specify whether format-based query failures (such as
             providing text to a numeric field) should be ignored
         :arg lowercase_expanded_terms: Specify whether query terms should be
             lowercased
-        :arg from_: Starting offset (default: 0)
         :arg preference: Specify the node or shard the operation should be
             performed on (default: random)
         :arg q: Query in the Lucene query string syntax
+        :arg request_cache: Specify if request cache should be used for this
+            request or not, defaults to index level setting
         :arg routing: A comma-separated list of specific routing values
         :arg scroll: Specify how long a consistent view of the index should be
             maintained for scrolled search
-        :arg search_type: Search operation type
+        :arg search_type: Search operation type, valid choices are:
+            'query_then_fetch', 'dfs_query_then_fetch'
         :arg size: Number of hits to return (default: 10)
         :arg sort: A comma-separated list of <field>:<direction> pairs
-        :arg source: The URL-encoded request definition using the Query DSL
-            (instead of using request body)
         :arg stats: Specific 'tag' of the request for logging and statistical
             purposes
+        :arg stored_fields: A comma-separated list of stored fields to return as
+            part of a hit
         :arg suggest_field: Specify which field to use for suggestions
-        :arg suggest_mode: Specify suggest mode (default: missing)
+        :arg suggest_mode: Specify suggest mode, default 'missing', valid
+            choices are: 'missing', 'popular', 'always'
         :arg suggest_size: How many suggestions to return in response
         :arg suggest_text: The source text for which the suggestions should be
             returned
+        :arg terminate_after: The maximum number of documents to collect for
+            each shard, upon reaching which the query execution will terminate
+            early.
         :arg timeout: Explicit operation timeout
+        :arg track_scores: Whether to calculate and return scores even if they
+            are not used for sorting
         :arg version: Specify whether to return document version as part of a
             hit
         """
