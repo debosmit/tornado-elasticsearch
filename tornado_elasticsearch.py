@@ -329,67 +329,86 @@ class AsyncElasticsearch(Elasticsearch):
         raise gen.Return(data)
 
     @gen.coroutine
-    @query_params('consistency', 'id', 'parent', 'percolate', 'refresh',
-                  'replication', 'routing', 'timeout', 'timestamp', 'ttl',
-                  'version', 'version_type')
-    def create(self, index, doc_type, body, id=None, params=None):
+    @query_params('parent', 'pipeline', 'refresh', 'routing',
+                  'timeout', 'timestamp', 'ttl', 'version', 'version_type')
+    def create(self, index, doc_type, id, body, params=None):
         """
         Adds a typed JSON document in a specific index, making it searchable.
         Behind the scenes this method calls index(..., op_type='create')
-        `<http://elasticsearch.org/guide/reference/api/index_/>`_
-
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html>`_
         :arg index: The name of the index
         :arg doc_type: The type of the document
         :arg id: Document ID
         :arg body: The document
-        :arg consistency: Explicit write consistency setting for the operation
-        :arg id: Specific document ID (when the POST method is used)
         :arg parent: ID of the parent document
-        :arg percolate: Percolator queries to execute while indexing the doc
-        :arg refresh: Refresh the index after performing the operation
-        :arg replication: Specific replication type (default: sync)
+        :arg pipeline: The pipeline id to preprocess incoming documents with
+        :arg refresh: If `true` then refresh the affected shards to make this
+            operation visible to search, if `wait_for` then wait for a refresh
+            to make this operation visible to search, if `false` (the default)
+            then do nothing with refreshes., valid choices are: u'true',
+            u'false', u'wait_for'
         :arg routing: Specific routing value
         :arg timeout: Explicit operation timeout
         :arg timestamp: Explicit timestamp for the document
         :arg ttl: Expiration time for the document
         :arg version: Explicit version number for concurrency control
-        :arg version_type: Specific version type
+        :arg version_type: Specific version type, valid choices are:
+            u'internal', u'external', u'external_gte', u'force'
+        :arg wait_for_active_shards: Sets the number of shard copies that must
+            be active before proceeding with the index operation. Defaults to 1,
+            meaning the primary shard only. Set to `all` for all shard copies,
+            otherwise set to any non-negative value less than or equal to the
+            total number of copies for the shard (number of replicas + 1)
         """
-        result = yield self.index(index, doc_type, body, id=id, params=params,
-                                  op_type='create')
+        for param in (index, doc_type, id, body):
+            if param in SKIP_IN_PATH:
+                raise ValueError('Empty value passed for a required argument.')
+        result = yield self.transport.perform_request('PUT', _make_path(index, doc_type,
+                                                                        id, '_create'),
+                                                      params=params, body=body)
         raise gen.Return(result)
 
     @gen.coroutine
-    @query_params('consistency', 'op_type', 'parent', 'percolate', 'refresh',
-                  'replication', 'routing', 'timeout', 'timestamp', 'ttl',
-                  'version', 'version_type')
+    @query_params('op_type', 'parent', 'pipeline', 'refresh', 'routing',
+                  'timeout', 'timestamp', 'ttl', 'version', 'version_type',
+                  'wait_for_active_shards')
     def index(self, index, doc_type, body, id=None, params=None):
         """
-        Adds or updates a typed JSON document in a specific index, making it
-        searchable. `<http://elasticsearch.org/guide/reference/api/index_/>`_
-
+        Adds or updates a typed JSON document in a specific index, making it searchable.
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html>`_
         :arg index: The name of the index
         :arg doc_type: The type of the document
         :arg body: The document
         :arg id: Document ID
-        :arg consistency: Explicit write consistency setting for the operation
-        :arg op_type: Explicit operation type (default: index)
+        :arg op_type: Explicit operation type, default 'index', valid choices
+            are: 'index', 'create'
         :arg parent: ID of the parent document
-        :arg percolate: Percolator queries to execute while indexing the doc
-        :arg refresh: Refresh the index after performing the operation
-        :arg replication: Specific replication type (default: sync)
+        :arg pipeline: The pipeline id to preprocess incoming documents with
+        :arg refresh: If `true` then refresh the affected shards to make this
+            operation visible to search, if `wait_for` then wait for a refresh
+            to make this operation visible to search, if `false` (the default)
+            then do nothing with refreshes., valid choices are: u'true',
+            u'false', u'wait_for'
         :arg routing: Specific routing value
         :arg timeout: Explicit operation timeout
         :arg timestamp: Explicit timestamp for the document
         :arg ttl: Expiration time for the document
         :arg version: Explicit version number for concurrency control
-        :arg version_type: Specific version type
-
+        :arg version_type: Specific version type, valid choices are: 'internal',
+            'external', 'external_gte', 'force'
+        :arg wait_for_active_shards: Sets the number of shard copies that must
+            be active before proceeding with the index operation. Defaults to 1,
+            meaning the primary shard only. Set to `all` for all shard copies,
+            otherwise set to any non-negative value less than or equal to the
+            total number of copies for the shard (number of replicas + 1)
         """
-        _, data = yield self.transport.perform_request('PUT' if id else 'POST',
-                                                       _make_path(index,
-                                                                  doc_type, id),
+        for param in (index, doc_type, body):
+            if param in SKIP_IN_PATH:
+                raise ValueError("Empty value passed for a required argument.")
+        _, data = yield self.transport.perform_request('POST' if id in SKIP_IN_PATH else 'PUT',
+                                                       _make_path(index, doc_type, id),
                                                        params=params, body=body)
+
         raise gen.Return(data)
 
     # TODO This method needs to be moved so it can be called as indices.exists
