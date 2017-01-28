@@ -648,43 +648,56 @@ class AsyncElasticsearch(Elasticsearch):
         raise gen.Return(data)
 
     @gen.coroutine
-    @query_params('consistency', 'fields', 'lang', 'parent', 'percolate',
-                  'refresh', 'replication', 'retry_on_conflict', 'routing',
-                  'script', 'timeout', 'timestamp', 'ttl', 'version',
-                  'version_type')
+    @query_params('_source', '_source_exclude', '_source_include', 'fields',
+                  'lang', 'parent', 'refresh', 'retry_on_conflict', 'routing', 'timeout',
+                  'timestamp', 'ttl', 'version', 'version_type', 'wait_for_active_shards')
     def update(self, index, doc_type, id, body=None, params=None):
         """
         Update a document based on a script or partial data provided.
-        `<http://elasticsearch.org/guide/reference/api/update/>`_
-
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update.html>`_
         :arg index: The name of the index
         :arg doc_type: The type of the document
         :arg id: Document ID
         :arg body: The request definition using either `script` or partial `doc`
-        :arg consistency: Explicit write consistency setting for the operation
+        :arg _source: True or false to return the _source field or not, or a
+            list of fields to return
+        :arg _source_exclude: A list of fields to exclude from the returned
+            _source field
+        :arg _source_include: A list of fields to extract and return from the
+            _source field
         :arg fields: A comma-separated list of fields to return in the response
-        :arg lang: The script language (default: mvel)
-        :arg parent: ID of the parent document
-        :arg percolate: Perform percolation during the operation; use specific
-            registered query name, attribute, or wildcard
-        :arg refresh: Refresh the index after performing the operation
-        :arg replication: Specific replication type (default: sync)
+        :arg lang: The script language (default: groovy)
+        :arg parent: ID of the parent document. Is is only used for routing and
+            when for the upsert request
+        :arg refresh: If `true` then refresh the effected shards to make this
+            operation visible to search, if `wait_for` then wait for a refresh
+            to make this operation visible to search, if `false` (the default)
+            then do nothing with refreshes., valid choices are: 'true', 'false',
+            'wait_for'
         :arg retry_on_conflict: Specify how many times should the operation be
             retried when a conflict occurs (default: 0)
         :arg routing: Specific routing value
-        :arg script: The URL-encoded script definition (instead of using
-            request body)
         :arg timeout: Explicit operation timeout
         :arg timestamp: Explicit timestamp for the document
         :arg ttl: Expiration time for the document
         :arg version: Explicit version number for concurrency control
-        :arg version_type: Explicit version number for concurrency control
+        :arg version_type: Specific version type, valid choices are: 'internal',
+            'force'
+        :arg wait_for_active_shards: Sets the number of shard copies that must
+            be active before proceeding with the update operation. Defaults to
+            1, meaning the primary shard only. Set to `all` for all shard
+            copies, otherwise set to any non-negative value less than or equal
+            to the total number of copies for the shard (number of replicas + 1)
         """
+        for param in (index, doc_type, id):
+            if param in SKIP_IN_PATH:
+                raise ValueError("Empty value passed for a required argument.")
         _, data = yield self.transport.perform_request('POST',
                                                        _make_path(index,
                                                                   doc_type, id,
                                                                   '_update'),
                                                        params=params, body=body)
+
         raise gen.Return(data)
 
     @gen.coroutine
