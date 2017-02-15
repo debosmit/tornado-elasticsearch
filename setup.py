@@ -1,43 +1,26 @@
-import os
-import setuptools
+#!/usr/bin/env python
 
-desc = ('Extends the official Elasticsearch Python API adding '
-        'Tornado AsyncHTTPClient support')
+from os.path import join, dirname
 
-try:
-    license = open('LICENSE').read()
-except IOError:
-    license = 'BSD'
+from setuptools import find_packages, setup
 
-try:
-    readme = open('README.rst').read()
-except IOError:
-    readme = ''
+VERSION = (0, 5, 0)
+__version__ = VERSION
+__versionstr__ = '.'.join(map(str, VERSION))
 
+with open(join(dirname(__file__), 'README')) as f:
+    long_description = f.read().strip()
 
-setuptools.setup(name='tornado_elasticsearch',
-                 version='0.4.0',
-                 description=desc,
-                 long_description=readme,
-                 author='Gavin M. Roy',
-                 author_email='gavinmroy@gmail.com',
-                 url='https://github.com/gmr/tornado_elasticsearch',
-                 py_modules=['tornado_elasticsearch'],
-                 install_requires=['elasticsearch', 'tornado'],
-                 license='BSD',
-                 classifiers=['Development Status :: 3 - Alpha',
-                              'Intended Audience :: Developers',
-                              'License :: OSI Approved :: BSD License',
-                              'Operating System :: OS Independent',
-                              'Programming Language :: Python :: 2',
-                              'Programming Language :: Python :: 2.6',
-                              'Programming Language :: Python :: 2.7',
-                              'Programming Language :: Python :: 3',
-                              'Programming Language :: Python :: 3.2',
-                              'Programming Language :: Python :: 3.3',
-                              'Programming Language :: Python :: Implementation :: CPython',
-                              'Programming Language :: Python :: Implementation :: PyPy',
-                              'Topic :: Communications',
-                              'Topic :: Internet',
-                              'Topic :: Software Development :: Libraries'],
-                 zip_safe=True)
+with open(join(dirname(__file__), 'requirements.txt')) as f:
+    reqs = f.read().split('\n')
+
+setup(name='tornado-elasticsearch', version=__versionstr__,
+      description='Async elasticsearch client for tornado',
+      url='https://code.uberinternal.com/diffusion/ENTOR/repository/master/',
+      packages=find_packages(),
+      install_requires=reqs,
+      author=['Debosmit Ray', 'John O\'Connor', 'Christopher McAndrews'],
+      maintainer='Trust Engineering',
+      maintainer_email='trust-engineering@uber.com',
+      include_package_data=True,
+      long_description=long_description)
