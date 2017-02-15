@@ -20,10 +20,10 @@ on how to use the API beyond the introduction for how to use with Tornado::
 
 """
 from elasticsearch.connection.base import Connection
-from elasticsearch.exceptions import ConnectionError, \
-    HTTP_EXCEPTIONS, \
-    NotFoundError, \
-    ConnectionTimeout
+from elasticsearch.exceptions import (
+    ConnectionError,
+    HTTP_EXCEPTIONS,
+    ConnectionTimeout)
 from elasticsearch.client import Elasticsearch
 from elasticsearch.transport import Transport, TransportError
 from elasticsearch.client.utils import query_params, _make_path, SKIP_IN_PATH
@@ -39,7 +39,7 @@ except ImportError:
     from urllib.parse import urlencode
 from tornado import version
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 
 LOGGER = logging.getLogger(__name__)
 
@@ -58,7 +58,8 @@ class AsyncHttpConnection(Connection):
     """
     _auth_user = None
     _auth_password = None
-    _user_agent = 'tornado_elasticsearch %s/Tornado %s' % (__version__, version)
+    _user_agent = 'tornado_elasticsearch %s/Tornado %s' % (
+        __version__, version)
     ssl_transport_schema = 'https'
 
     def __init__(self, host='localhost', port=9200, http_auth=None,
@@ -86,11 +87,13 @@ class AsyncHttpConnection(Connection):
 
         def on_response(response):
             duration = time.time() - self._start_time
-            raw_data = response.body.decode('utf-8') if response.body is not None else None
+            raw_data = response.body.decode(
+                'utf-8') if response.body is not None else None
             LOGGER.info('Response from %s: %s', url, response.code)
             if not (200 <= response.code < 300) and response.code not in ignore:
                 LOGGER.debug('Error: %r', raw_data)
-                self.log_request_fail(method, url, body, duration, response.code)
+                self.log_request_fail(
+                    method, url, body, duration, response.code)
                 error = HTTP_EXCEPTIONS.get(response.code, TransportError)
                 raise error(response.code, raw_data)
             self.log_request_success(method, request_uri, url, body,
@@ -103,7 +106,8 @@ class AsyncHttpConnection(Connection):
         args.update(kwargs)
         if self._ca_certs:
             args['ca_certs'] = self._ca_certs
-        self._client.fetch(httpclient.HTTPRequest(**args), callback=on_response)
+        self._client.fetch(httpclient.HTTPRequest(
+            **args), callback=on_response)
 
     def _assign_auth_values(self, http_auth):
         """Take the http_auth value and split it into the attributes that
@@ -230,7 +234,8 @@ class AsyncTransport(Transport):
                     raise gen.Return(200 <= status < 300)
                 # connection didn't fail, confirm it's live status
                 self.connection_pool.mark_live(connection)
-                raise gen.Return((status, self.deserializer.loads(data, headers.get('content-type') if data else None)))
+                raise gen.Return((status, self.deserializer.loads(
+                    data, headers.get('content-type') if data else None)))
 
 
 @gen.coroutine
@@ -393,7 +398,8 @@ class AsyncElasticsearch(Elasticsearch):
         raise gen.Return(data)
 
     # TODO This method needs to be moved so it can be called as indices.exists
-    # The current project structure should aim to parallel the sync elasticsearch client.
+    # The current project structure should aim to parallel the sync
+    # elasticsearch client.
     @gen.coroutine
     @query_params('allow_no_indices', 'expand_wildcards', 'ignore_unavailable',
                   'local')
@@ -414,7 +420,8 @@ class AsyncElasticsearch(Elasticsearch):
             master node (default: false)
         """
         if index in SKIP_IN_PATH:
-            raise ValueError("Empty value passed for a required argument 'index'.")
+            raise ValueError(
+                "Empty value passed for a required argument 'index'.")
         result = yield self.transport.perform_request('HEAD', _make_path(index), params=params)
         raise gen.Return(result)
 
@@ -439,7 +446,8 @@ class AsyncElasticsearch(Elasticsearch):
         :arg routing: Specific routing value
         """
         result = yield self.transport.perform_request('HEAD',
-                                                      _make_path(index, doc_type, id),
+                                                      _make_path(
+                                                          index, doc_type, id),
                                                       params=params)
         raise gen.Return(result)
 
@@ -536,7 +544,8 @@ class AsyncElasticsearch(Elasticsearch):
         :arg timeout: Request timeout
         """
         if body in SKIP_IN_PATH:
-            raise ValueError("Empty value passed for a required argument 'body'.")
+            raise ValueError(
+                "Empty value passed for a required argument 'body'.")
         _, result = yield self.transport.perform_request('POST', '/_aliases', params=params, body=body)
         raise gen.Return(result)
 
@@ -557,7 +566,8 @@ class AsyncElasticsearch(Elasticsearch):
         for param in (index, name):
             if param in SKIP_IN_PATH:
                 raise ValueError("Empty value passed for a required argument.")
-        _, result = yield self.transport.perform_request('PUT', _make_path(index, '_alias', name), params=params, body=body)
+        _, result = yield self.transport.perform_request('PUT', _make_path(index, '_alias', name),
+                                                         params=params, body=body)
         raise gen.Return(result)
 
     @gen.coroutine

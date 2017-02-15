@@ -4,7 +4,7 @@ from os.path import join, dirname
 
 from setuptools import find_packages, setup
 
-VERSION = (0, 5, 0)
+VERSION = (0, 5, 1)
 __version__ = VERSION
 __versionstr__ = '.'.join(map(str, VERSION))
 
@@ -14,7 +14,7 @@ with open(join(dirname(__file__), 'README')) as f:
 with open(join(dirname(__file__), 'requirements.txt')) as f:
     reqs = f.read().split('\n')
 
-setup(name='tornado-elasticsearch', version=__versionstr__,
+setup(name='uber-tornado-elasticsearch', version=__versionstr__,
       description='Async elasticsearch client for tornado',
       url='https://code.uberinternal.com/diffusion/ENTOR/repository/master/',
       packages=find_packages(),
