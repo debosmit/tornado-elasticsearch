@@ -4,7 +4,7 @@ from os.path import join, dirname
 
 from setuptools import find_packages, setup
 
-VERSION = (0, 5, 1)
+VERSION = (0, 5, 2)
 __version__ = VERSION
 __versionstr__ = '.'.join(map(str, VERSION))
 
@@ -23,4 +23,5 @@ setup(name='uber-tornado-elasticsearch', version=__versionstr__,
       maintainer='Trust Engineering',
       maintainer_email='trust-engineering@uber.com',
       include_package_data=True,
-      long_description=long_description)
+      long_description=long_description,
+      py_modules=['tornado_elasticsearch'])

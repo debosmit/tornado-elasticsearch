@@ -39,7 +39,7 @@ except ImportError:
     from urllib.parse import urlencode
 from tornado import version
 
-__version__ = '0.5.1'
+__version__ = '0.5.2'
 
 LOGGER = logging.getLogger(__name__)
 
