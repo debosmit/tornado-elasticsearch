@@ -39,7 +39,7 @@ except ImportError:
     from urllib.parse import urlencode
 from tornado import version
 
-__version__ = '0.5.2'
+__version__ = '0.5.3'
 
 LOGGER = logging.getLogger(__name__)
 
@@ -897,31 +897,48 @@ class AsyncElasticsearch(Elasticsearch):
         raise gen.Return(data)
 
     @gen.coroutine
-    @query_params('ignore_indices', 'min_score', 'preference', 'routing',
-                  'source')
+    @query_params('allow_no_indices', 'analyze_wildcard', 'analyzer',
+        'default_operator', 'df', 'expand_wildcards', 'ignore_unavailable',
+        'lenient', 'lowercase_expanded_terms', 'min_score', 'preference', 'q',
+        'routing')
     def count(self, index=None, doc_type=None, body=None, params=None):
         """
         Execute a query and get the number of matches for that query.
-        `<http://elasticsearch.org/guide/reference/api/count/>`_
-
+        `<http://www.elastic.co/guide/en/elasticsearch/reference/current/search-count.html>`_
         :arg index: A comma-separated list of indices to restrict the results
         :arg doc_type: A comma-separated list of types to restrict the results
-        :arg body: A query to restrict the results (optional)
-        :arg ignore_indices: When performed on multiple indices, allows to
-            ignore `missing` ones (default: none)
-        :arg min_score: Include only documents with a specific `_score` value
-            in the result
+        :arg body: A query to restrict the results specified with the Query DSL
+            (optional)
+        :arg allow_no_indices: Whether to ignore if a wildcard indices
+            expression resolves into no concrete indices. (This includes `_all`
+            string or when no indices have been specified)
+        :arg analyze_wildcard: Specify whether wildcard and prefix queries
+            should be analyzed (default: false)
+        :arg analyzer: The analyzer to use for the query string
+        :arg default_operator: The default operator for query string query (AND
+            or OR), default 'OR', valid choices are: 'AND', 'OR'
+        :arg df: The field to use as default where no field prefix is given in
+            the query string
+        :arg expand_wildcards: Whether to expand wildcard expression to concrete
+            indices that are open, closed or both., default 'open', valid
+            choices are: 'open', 'closed', 'none', 'all'
+        :arg ignore_unavailable: Whether specified concrete indices should be
+            ignored when unavailable (missing or closed)
+        :arg lenient: Specify whether format-based query failures (such as
+            providing text to a numeric field) should be ignored
+        :arg lowercase_expanded_terms: Specify whether query terms should be
+            lowercased
+        :arg min_score: Include only documents with a specific `_score` value in
+            the result
         :arg preference: Specify the node or shard the operation should be
             performed on (default: random)
+        :arg q: Query in the Lucene query string syntax
         :arg routing: Specific routing value
-        :arg source: The URL-encoded query definition (instead of using the
-            request body)
         """
-        _, data = yield self.transport.perform_request('POST',
-                                                       _make_path(index,
-                                                                  doc_type,
-                                                                  '_count'),
-                                                       params=params, body=body)
+        if doc_type and not index:
+            index = '_all'
+        _, data = yield self.transport.perform_request('GET', _make_path(
+            index, doc_type, '_count'), params=params, body=body)
         raise gen.Return(data)
 
     @gen.coroutine

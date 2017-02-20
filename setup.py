@@ -4,7 +4,7 @@ from os.path import join, dirname
 
 from setuptools import find_packages, setup
 
-VERSION = (0, 5, 2)
+VERSION = (0, 5, 3)
 __version__ = VERSION
 __versionstr__ = '.'.join(map(str, VERSION))
 
